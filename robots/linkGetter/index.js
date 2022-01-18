@@ -1,45 +1,38 @@
 const puppeteer = require("puppeteer");
 
-const audioInfo = {};
-
 async function main(youtubeVideoId) {
-	try {
-		if (youtubeVideoId) {
-			const url = `https://www.y2mate.com/youtube-mp3/${youtubeVideoId}`;
-			await setAudioInfo(url);
-		} else {
-			throw new Error("youtubeVideoId prop is missing");
-		}
-		if (audioInfo.downloadLink) {
-			download(audioInfo.downloadLink, songName, downloadPath);
-		} else {
-			throw new Error("downloadLink prop is missing");
-		}
-	} catch (err) {
-		console.error(err);
-	}
-}
+	const url = "https://x2download.com/en26/download-youtube-to-mp3";
 
-async function setAudioInfo(url) {
 	const browser = await puppeteer.launch();
 	const page = await browser.newPage();
-
-	page.setDefaultNavigationTimeout(0);
-
 	await page.goto(url);
 
-	const downloadBtnQuery = "#process_mp3";
-	await page.waitForSelector(downloadBtnQuery, { timeout: 0 });
-	await page.click(downloadBtnQuery);
+	await page.type(
+		"#s_input",
+		`https://www.youtube.com/watch?v=${youtubeVideoId}`
+	);
 
-	const getLinkBtnQuery = ".form-group.has-success.has-feedback a";
+	await page.click(".btn-red");
 
-	await page.waitForSelector(getLinkBtnQuery, { timeout: 0 });
-	const downloadLink = await page.$eval(getLinkBtnQuery, (el) => el.href);
+	const callDownloadBtnQuery = "#btn-action";
+	await page.waitForSelector(callDownloadBtnQuery);
+	await page.click(callDownloadBtnQuery);
 
-	audioInfo.downloadLink = downloadLink;
+	const linkDownloadResponse = await page.waitForResponse(
+		"https://backend.svcenter.xyz/api/convert-by-45fc4be8916916ba3b8d61dd6e0d6994"
+	);
+
+	linkDownloadResponse.ok() &&
+		(await page.waitForSelector("#asuccess", { visible: true }));
+
+	const downloadLinkElementHandle = await page.$("#asuccess");
+	const downloadLink = await (
+		await downloadLinkElementHandle.getProperty("href")
+	)._remoteObject.value;
 
 	await browser.close();
+
+	return downloadLink;
 }
 
 module.exports = main;
