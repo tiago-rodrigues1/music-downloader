@@ -3,7 +3,7 @@ const puppeteer = require("puppeteer");
 async function main(youtubeVideoId) {
 	const url = "https://x2download.com/en26/download-youtube-to-mp3";
 
-	const browser = await puppeteer.launch();
+	const browser = await puppeteer.launch({ headless: false });
 	const page = await browser.newPage();
 	await page.goto(url);
 
@@ -15,7 +15,9 @@ async function main(youtubeVideoId) {
 	await page.click(".btn-red");
 
 	const callDownloadBtnQuery = "#btn-action";
-	await page.waitForSelector(callDownloadBtnQuery);
+	await page.waitForSelector(callDownloadBtnQuery, {
+		timeout: 0,
+	});
 	await page.click(callDownloadBtnQuery);
 
 	const linkDownloadResponse = await page.waitForResponse(
@@ -23,7 +25,10 @@ async function main(youtubeVideoId) {
 	);
 
 	linkDownloadResponse.ok() &&
-		(await page.waitForSelector("#asuccess", { visible: true }));
+		(await page.waitForSelector("#asuccess", {
+			visible: true,
+			timeout: 0,
+		}));
 
 	const downloadLinkElementHandle = await page.$("#asuccess");
 	const downloadLink = await (
